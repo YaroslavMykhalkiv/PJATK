@@ -1,0 +1,9 @@
+select * from osoba;
+
+select * from Przedmiot;
+
+select imie, nazwisko, dataurodzenia from osoba order by year(DataUrodzenia) desc, Nazwisko;
+
+select imie from osoba where imie like 'K%';
+
+select imie, nazwisko from osoba where len(imie) = 5;

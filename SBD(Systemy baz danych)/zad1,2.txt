@@ -1,0 +1,45 @@
+use [2019SBD];
+DECLARE @MaxNrInd Int;
+SELECT @MaxNrInd = Max(Cast(Right(Rtrim(NrIndeksu), Len(Rtrim(NrIndeksu)) - 1) As Varchar)) FROM student;
+SELECT Concat('s', @MaxNrInd);
+
+select * from osoba;
+
+select * from Student;
+DROP PROCEDURE Proce;
+DROP PROCEDURE Proce1;
+
+go
+CREATE PROCEDURE Proce 
+@year varchar(4)
+as
+SELECT o.Imie, o.Nazwisko, s.NrIndeksu
+FROM Osoba o 
+--join Miasto m on o.idMiasto = m.IdMiasto
+join Student s on s.IdOsoba = o.IdOsoba
+where year(s.DataRekrutacji) like @year
+return;
+
+
+go
+CREATE PROCEDURE Proce1 
+@year varchar(4),
+@counter int output
+as
+select @counter = COUNT(s.IdOsoba)
+FROM Osoba o 
+--join Miasto m on o.idMiasto = m.IdMiasto
+join Student s on s.IdOsoba = o.IdOsoba
+where year(s.DataRekrutacji) like @year ;
+
+select * from Miasto;
+
+declare @couneter int
+exec Proce'2012'
+exec Proce1 '2012', @couneter output
+PRINT 'Studentow ' + CONVERT(VARCHAR, @couneter);
+
+insert into Miasto values ('Warszawa')
+insert into Miasto values ('Odessa')
+insert into Miasto values ('New York')
+insert into Miasto values ('Madrid')

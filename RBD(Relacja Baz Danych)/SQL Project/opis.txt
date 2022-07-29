@@ -1,0 +1,6 @@
+Aby prawidłowo i skutecznie prowadzić działalność w zakresie kompleksu hotelowego służy do tego baza danych. W bazie danych można: śledzić wolne pokoje dla gości na określone numery, a jednocześnie wiedzieć, jakie pokoje są aktualnie zarezerwowane, harmonogramy sprzątania pokoi, monitorować skład zespołu. W bazie mają być przechowywane następujące
+informacje:
+- o pokojach;
+- o klientach;
+- grafika sprzątania pokoju;
+- o pracownikach;

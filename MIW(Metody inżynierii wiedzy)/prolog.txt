@@ -1,0 +1,295 @@
+:- dynamic currPos/1.
+:- retractall(currPos(_)), retractall(roomsItems(_,_)), retractall(player(_,_)).
+
+%text - instructions
+
+setApartment :-
+    nl,
+    writeln('Use this commands: '),
+    writeln('up -> to go up'),
+    writeln('down -> to go down'),
+    writeln('left -> to go left'),
+    writeln('right -> to go right'),
+    writeln('pickup -> to pick up the thing near you'),
+    writeln('put ->  to put thing from your bag'),
+    writeln('desc -> to describe the place where you are'),
+    writeln('dir -> to see the possible ways'),
+    nl,
+    desc.
+
+%mobilty functions
+
+go(Direction) :-
+        currPos(Here),
+        path(Here, Direction, There),
+        retract(currPos(Here)),
+        assert(currPos(There)),
+		desc,
+    	!.
+		
+go(_) :-
+        writeln('You can\'t go this way').
+
+
+%start
+currPos(hallway).
+
+%place info
+
+posInfo(hallway, 'in a ').
+posInfo(toiletroom, 'in a ').
+posInfo(bathroom, 'in a ').
+posInfo(bedroom, 'in a ').
+posInfo(bed,'near a ').
+posInfo(commode,'near a ').
+posInfo(window,'near a ').
+posInfo(bedroomTable,'near a ').
+posInfo(bath,'near a ').
+posInfo(toilet,'near a ').
+posInfo(sink,'near a ').
+posInfo(mirror,'near a ').
+
+%room paths with directions
+path(hallway, right, toiletroom).
+path(hallway, up, bathroom).
+path(hallway, down, exit).
+path(hallway, left, bedroom).
+path(bathroom, down, hallway).
+path(bedroom, right, hallway).
+path(toiletroom, left, hallway).
+path(exit, up, hallway).
+
+%Bedroom items
+path(bedroom,up, bed).
+path(bedroom,down, commode).
+path(bedroom,left, window).
+path(commode,left, window).
+path(commode,up, bedroom).
+path(bed,down, bedroom).
+path(bed,left, bedroomTable).
+path(bedroomTable,down,window).
+path(bedroomTable,right,bed).
+path(window,right,bedroom).
+path(window,down,commode).
+path(window,up,bedroomTable).
+
+%toiletroom items
+path(toiletroom, right, sink).
+path(toiletroom, up, toilet).
+path(toilet, right, sink).
+path(toilet, down, toiletroom).
+path(sink, up, toilet).
+path(sink, left, toiletroom).
+
+%bathroom items
+path(bathroom,up,bath).
+path(bathroom,right,mirror).
+path(mirror, left, bathroom).
+path(mirror, up, bath).
+path(bath, right, mirror).
+path(bath, down, bathroom).
+
+%inventory
+
+player(bag,['pen','phone']).
+
+getBag :-
+    player(bag, X),
+	writeln('My bag\'s items: '),
+	writeln(X).
+
+removeFromBag(Item) :-
+    player(bag,X),
+    select(Item,X,NewBag),
+    retract(player(bag,X)),
+	assert(player(bag,NewBag)),
+	getBag,
+    !.
+
+addToBag(NewItem) :-
+	player(bag,X),
+	append([NewItem], X, NewBag),
+    retract(player(bag,X)),
+	assert(player(bag,NewBag)),
+	getBag,
+    !.
+
+
+%itemsInRooms
+roomsItems(commode, [shirt, t-shirt, hat]).
+roomsItems(hallway, [doormat]).
+roomsItems(bathroom, [towel]).
+roomsItems(debroom, [ball]).
+roomsItems(bedroomTable, [monitor, laptop]).
+roomsItems(bed, [pillow, blanket]).
+roomsItems(toiletroom, [toiletpaper]).
+roomsItems(sink, [soap, towel]).
+roomsItems(bath, [shampoo, gel]).
+
+%desc of the place
+
+descriptionAround :-
+	currPos(Room),
+    describe(Room), !. 
+
+% rules - directions and descriptions
+
+up :- go(up).
+
+down :- go(down).
+
+right :- go(right).
+
+left :- go(left).
+
+desc :- descriptionAround.
+
+dir :- possible_directions.
+
+%description of rooms
+
+possible_directions:-
+	currPos(Here),
+	path(Here, Dir, Room),
+	write('You can go '),
+	write(Dir),
+	write(' to come to '),
+	writeln(Room),
+    fail.
+
+
+describe(Place):-
+    posInfo(Place,I),
+	write('You are '),
+    write(I),
+    writeln(Place),
+    getItems(Place),
+	dir.
+
+describe(_):-
+    nl.
+
+%rules to display items in a room
+
+getItems(Place) :-
+    roomsItems(Place, X),
+	write('Things near you: '),
+	writeln(X), !.
+
+getItems(_) :-
+	writeln('Here is no things...').
+
+takeItem(Item) :-
+	currPos(Place),
+    roomsItems(Place,X),
+    member(Item,X),
+	removeItemFromPlace(Place,Item),
+    !.
+
+takeItem(_) :-
+	write('There is no this item'),
+    nl,
+    !.
+
+putItemInPlace(Item) :-
+    currPos(Room),
+   	player(bag, X),
+    member(Item, X),
+	addItemToPlace(Room, Item),
+    !.
+
+putItemInPlace(_) :-
+    write('You dont have this thing to put!'),
+    nl,
+    !.
+
+removeItemFromPlace(Room, Item) :-
+    roomsItems(Room,X),
+    select(Item,X,NewTab),
+    retract(roomsItems(Room,X)),
+	assert(roomsItems(Room,NewTab)),
+    getItems(Room),
+    addToBag(Item),
+	writeln('You pickep up the thing: '),
+	writeln(Item),
+    !.
+
+addItemToPlace(Room, NewItem) :-
+	roomsItems(Room,X),
+    ItemToRemove = ItemToAdd, ItemToRemove = NewItem, %unifikacja
+	append([ItemToAdd], X, NewTab),
+    retract(roomsItems(Room,X)),
+	assert(roomsItems(Room,NewTab)),
+    getItems(Room),
+    removeFromBag(ItemToRemove),
+	writeln('You put the item from your bag'),
+	writeln(ItemToAdd),
+    !.
+
+%rules commands to menage inventory room Items
+
+pickup :- 
+    writeln('Write the item which you want to take'),
+    currPos(Room),
+    getItems(Room),
+    read(NewItem),
+    takeItem(NewItem).
+
+put :- 
+    writeln('Write the item which you want to put'),
+    bag,
+    read(ItemToRemove),
+    putItemInPlace(ItemToRemove).
+
+bag:- 
+    getBag.
+
+do(up):-
+    up.
+do(down):-
+    down.
+do(left):-
+    left.
+do(right):-
+    right.
+do(desc):-
+    desc.
+do(bag):-
+    bag.
+
+do(dir):-
+    dir.
+
+do(pickup):-
+    pickup.
+
+do(put):-
+    put.
+
+do(_):-
+    writeln('There is no command like this!').
+
+moveHandler :- % end of main loop
+    currPos(exit),
+    writeln('Are you sure you want to exit?(yes/no)'),
+    read(Answer),
+    Answer = yes,
+    !.
+
+moveHandler :- 
+    currPos(exit),
+    go(up),
+    moveHandler.
+
+moveHandler :- % main loop
+    nl,
+    writeln('What will you do?'),
+    read(Act),
+    call(do(Act)),
+    moveHandler.
+
+
+
+start :- 
+    setApartment,
+    moveHandler.
